@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cẩm Nang Tương Tác: Xử Lý Sự Cố Biến Tần</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals & Serene Blues -->
+    <!-- Application Structure Plan: The application is designed as a task-oriented interactive dashboard. The structure prioritizes the user's immediate troubleshooting needs. It starts with a prominent search bar and quick diagnostic cards for non-code errors. It then presents a high-level overview of root causes with a doughnut chart. The core of the app is the interactive error code lookup, featuring brand filters (tabs/buttons) to dynamically display relevant data tables, which is far more efficient than scrolling a PDF. Finally, it consolidates best practices for maintenance and installation into accessible accordions. This architecture guides the user from immediate problem-solving to preventive knowledge. -->
+    <!-- Visualization & Content Choices: 
+        - Root Causes: Doughnut Chart (Chart.js) -> Goal: Inform/Compare. Justification: Effectively shows the percentage breakdown of failure sources, providing a quick visual summary of common pitfalls.
+        - Quick Diagnostics: Interactive Cards (HTML/CSS/JS) -> Goal: Organize/Inform. Justification: Provides clean, tappable entry points for common scenarios without error codes. JS toggles visibility for step-by-step guidance.
+        - Error Code Lookup: Brand Filter Buttons + Dynamic Table (HTML/CSS/JS) -> Goal: Organize/Filter. Justification: The most user-friendly way to manage a large, multi-brand dataset. The interaction allows users to instantly isolate the information they need. The search bar adds a layer of powerful filtering across all data.
+        - Procedures: Accordions (HTML/CSS/JS) -> Goal: Organize. Justification: Condenses large blocks of text into a compact, manageable format, preventing information overload and excessive scrolling.
+        - Icons: Unicode characters (e.g., 💡, 🔧, 🔌) are used for lightweight visual cues. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 320px;
+            width: 100%;
+            max-width: 320px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+                max-width: 400px;
+            }
+        }
+        .active-brand {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        .brand-button {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-blue-600">Sổ Tay Biến Tần</h1>
+            <div class="hidden md:flex space-x-6">
+                <a href="#diagnostics" class="text-slate-600 hover:text-blue-600 transition">Chẩn Đoán Nhanh</a>
+                <a href="#root-cause" class="text-slate-600 hover:text-blue-600 transition">Nguyên Nhân Gốc</a>
+                <a href="#error-codes" class="text-slate-600 hover:text-blue-600 transition">Tra Cứu Lỗi</a>
+                <a href="#procedures" class="text-slate-600 hover:text-blue-600 transition">Quy Trình Chuẩn</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <section id="hero" class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 text-slate-900">Cẩm Nang Tương Tác: Xử Lý Sự Cố Biến Tần</h2>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto mb-6">Công cụ tra cứu nhanh mã lỗi, nguyên nhân và giải pháp khắc phục cho các loại biến tần công nghiệp phổ biến.</p>
+        </section>
+
+        <section id="diagnostics" class="mb-12">
+            <h3 class="text-2xl font-bold mb-6 text-center text-slate-800">Chẩn Đoán Nhanh (Khi không có mã lỗi)</h3>
+             <div class="grid md:grid-cols-2 gap-6">
+                
+                <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow diagnostic-card">
+                    <h4 class="text-xl font-semibold mb-3 flex items-center">🔌 Biến tần không lên nguồn</h4>
+                    <div class="text-slate-600 space-y-2 diagnostic-details hidden">
+                        <p><strong>1. Kiểm tra nguồn cấp:</strong> Dùng đồng hồ VOM đo điện áp tại cọc R, S, T. Đảm bảo điện áp phù hợp.</p>
+                        <p><strong>2. Kiểm tra cầu Diode:</strong> Kiểm tra xem cầu chỉnh lưu có bị nổ không.</p>
+                        <p><strong>3. Kiểm tra đèn "CHARGE":</strong> Nếu đèn sáng mà màn hình tối, có thể lỗi mạch nguồn cấp phụ.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow diagnostic-card">
+                    <h4 class="text-xl font-semibold mb-3 flex items-center">⚡ Aptomat (CB) nhảy ngay khi cấp nguồn</h4>
+                    <div class="text-slate-600 space-y-2 diagnostic-details hidden">
+                        <p><strong>1. Ngắn mạch đầu vào:</strong> Kiểm tra dây dẫn cấp nguồn có bị ngắn mạch hoặc chạm đất không.</p>
+                        <p><strong>2. Cháy cầu Diode:</strong> Đây là nguyên nhân phổ biến nhất, gây ra dòng điện cực lớn.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow diagnostic-card">
+                    <h4 class="text-xl font-semibold mb-3 flex items-center">🚫 Động cơ không chạy dù có lệnh RUN</h4>
+                    <div class="text-slate-600 space-y-2 diagnostic-details hidden">
+                        <p><strong>1. Đo điện áp ngõ ra (U, V, W):</strong></p>
+                        <p>  - <strong>Nếu điện áp cân bằng:</strong> Kiểm tra động cơ (cháy cuộn dây) hoặc cơ khí (bị kẹt).</p>
+                        <p>  - <strong>Nếu mất pha/không cân bằng:</strong> Lỗi board công suất (IGBT) của biến tần.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow diagnostic-card">
+                    <h4 class="text-xl font-semibold mb-3 flex items-center">💥 Aptomat (CB) nhảy khi nhấn RUN</h4>
+                    <div class="text-slate-600 space-y-2 diagnostic-details hidden">
+                        <p><strong>1. Ngắn mạch ngõ ra:</strong> Kiểm tra cáp động cơ hoặc bên trong động cơ.</p>
+                        <p><strong>2. Lỗi chạm đất (Ground Fault):</strong> Động cơ hoặc cáp bị rò điện xuống vỏ.</p>
+                        <p><strong>3. Hỏng khối IGBT:</strong> IGBT bị lỗi gây ngắn mạch khi biến tần xuất điện áp.</p>
+                        <p><strong>4. Dây dẫn quá dài:</strong> Gây dòng rò điện dung. Cân nhắc lắp cuộn kháng AC ngõ ra.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="root-cause" class="mb-12 bg-white p-6 rounded-lg shadow-lg">
+            <h3 class="text-2xl font-bold mb-2 text-center text-slate-800">Phân Tích Nguyên Nhân Gốc Rễ Gây Sự Cố</h3>
+            <p class="text-center text-slate-600 mb-6">Dựa trên thống kê và kinh nghiệm, đây là tỷ lệ ước tính của các nhóm nguyên nhân chính gây hỏng hóc biến tần.</p>
+            <div class="chart-container">
+                <canvas id="rootCauseChart"></canvas>
+            </div>
+        </section>
+
+        <section id="error-codes" class="mb-12">
+            <h3 class="text-2xl font-bold mb-6 text-center text-slate-800">Tra Cứu Mã Lỗi Chi Tiết</h3>
+            <form id="searchForm" class="max-w-xl mx-auto mb-6">
+                <input type="text" id="searchInput" placeholder="🔎 Tìm kiếm mã lỗi hoặc từ khóa (ví dụ: E.OC1, quá áp...)" class="w-full px-4 py-3 border border-slate-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </form>
+            <div id="brand-filters" class="flex flex-wrap justify-center gap-2 mb-6">
+                <!-- Brand buttons will be inserted here by JS -->
+            </div>
+            <div class="overflow-x-auto bg-white rounded-lg shadow-lg">
+                <table class="w-full text-left" id="error-table">
+                    <thead class="bg-slate-100">
+                        <tr>
+                            <th class="p-4 font-semibold">Mã Lỗi</th>
+                            <th class="p-4 font-semibold">Mô Tả</th>
+                            <th class="p-4 font-semibold">Nguyên Nhân Khả Dĩ</th>
+                            <th class="p-4 font-semibold">Hành Động Khắc Phục</th>
+                        </tr>
+                    </thead>
+                    <tbody id="error-table-body">
+                        <!-- Error data will be inserted here by JS -->
+                    </tbody>
+                </table>
+                 <p id="no-results" class="text-center p-8 text-slate-500 hidden">Không tìm thấy kết quả phù hợp.</p>
+            </div>
+        </section>
+
+        <section id="procedures">
+            <h3 class="text-2xl font-bold mb-6 text-center text-slate-800">Quy Trình Chuẩn & Biện Pháp Phòng Ngừa</h3>
+             <div class="space-y-4">
+                <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full text-left p-6 font-semibold text-xl flex justify-between items-center">
+                        <span>🛠️ Quy Trình Bảo Trì Toàn Diện</span>
+                        <span>+</span>
+                    </button>
+                    <div class="accordion-content hidden p-6 border-t border-slate-200 text-slate-600 space-y-4">
+                        <p class="text-red-600 font-bold">⚠️ AN TOÀN LÀ TRÊN HẾT: Ngắt hoàn toàn nguồn điện và chờ ít nhất 10 phút để tụ xả hết trước khi thao tác.</p>
+                        <h5 class="font-semibold text-lg">A. Kiểm Tra Định Kỳ (Không dừng máy):</h5>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Kiểm tra môi trường: Nhiệt độ, độ ẩm, bụi bẩn.</li>
+                            <li>Kiểm tra vận hành: Tiếng ồn, mùi, độ rung bất thường.</li>
+                            <li>Kiểm tra thông số: Theo dõi dòng điện, điện áp, tần số trên màn hình.</li>
+                            <li>Kiểm tra lịch sử lỗi: Phát hiện các lỗi lặp đi lặp lại.</li>
+                        </ul>
+                         <h5 class="font-semibold text-lg">B. Bảo Dưỡng Chuyên Sâu (Dừng máy):</h5>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>**Sao lưu thông số:** Bước đầu tiên và quan trọng nhất.</li>
+                            <li>**Vệ sinh:** Dùng khí nén khô và cọ mềm thổi sạch bụi.</li>
+                            <li>**Kiểm tra cơ khí:** Siết lại tất cả các ốc vít trên cọc đấu dây.</li>
+                            <li>**Kiểm tra linh kiện:** Quan sát quạt, tụ điện. Bôi keo tản nhiệt mới cho IGBT.</li>
+                            <li>**Đo kiểm tra nguội:** Đo cách điện động cơ, kiểm tra Diode và IGBT bằng đồng hồ VOM.</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full text-left p-6 font-semibold text-xl flex justify-between items-center">
+                        <span>🔩 Tiêu Chuẩn Lắp Đặt An Toàn</span>
+                        <span>+</span>
+                    </button>
+                    <div class="accordion-content hidden p-6 border-t border-slate-200 text-slate-600 space-y-4">
+                        <h5 class="font-semibold text-lg">Lựa Chọn & Môi Trường:</h5>
+                        <ul class="list-disc list-inside space-y-1">
+                             <li>Chọn công suất biến tần ≥ công suất động cơ.</li>
+                            <li>Phân biệt tải nhẹ (bơm, quạt) và tải nặng (cẩu trục, máy ép) để chọn đúng dòng biến tần.</li>
+                             <li>Lắp đặt nơi khô ráo, thoáng mát, có thông gió tốt và theo phương thẳng đứng.</li>
+                             <li>Tuân thủ khoảng cách an toàn giữa các thiết bị theo khuyến cáo.</li>
+                        </ul>
+                         <h5 class="font-semibold text-lg">Đấu Nối & Chống Nhiễu:</h5>
+                        <ul class="list-disc list-inside space-y-1">
+                             <li><strong class="text-red-600">TUYỆT ĐỐI KHÔNG ĐẤU NGƯỢC</strong> nguồn vào (R,S,T) và ngõ ra (U,V,W).</li>
+                             <li>Bắt buộc phải tiếp địa cho vỏ biến tần và động cơ.</li>
+                             <li>Đi dây tín hiệu điều khiển tách biệt khỏi dây động lực. Dùng cáp xoắn chống nhiễu cho tín hiệu.</li>
+                             <li>Lắp điện trở xả cho tải quán tính lớn và cuộn kháng để giảm nhiễu hài.</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full text-left p-6 font-semibold text-xl flex justify-between items-center">
+                        <span>⚙️ Các Bước Cài Đặt Ban Đầu</span>
+                        <span>+</span>
+                    </button>
+                    <div class="accordion-content hidden p-6 border-t border-slate-200 text-slate-600 space-y-4">
+                        <p><strong class="text-blue-600">1. Nhập thông số động cơ:</strong> Bước quan trọng nhất. Nhập chính xác công suất (kW), điện áp (V), dòng điện (A), tần số (Hz), tốc độ (RPM) từ nhãn động cơ.</p>
+                        <p><strong class="text-blue-600">2. Thực hiện Auto-tuning:</strong> Bước thiết yếu. Cho phép biến tần nhận dạng chính xác động cơ để điều khiển tối ưu, đặc biệt với chế độ Vector.</p>
+                        <p><strong class="text-blue-600">3. Cài đặt vận hành cơ bản:</strong></p>
+                        <ul class="list-disc list-inside ml-4">
+                            <li>Đặt thời gian tăng/giảm tốc phù hợp với quán tính tải.</li>
+                            <li>Đặt giới hạn tần số hoạt động (Max/Min).</li>
+                            <li>Chọn chế độ điều khiển (V/F hoặc Vector) phù hợp với ứng dụng.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="text-center py-6 bg-slate-100 mt-12">
+        <p class="text-slate-500">Thông tin trong cẩm nang này chỉ mang tính tham khảo. Luôn tuân thủ tài liệu kỹ thuật của nhà sản xuất.</p>
+    </footer>
+
+    <script>
+        const errorData = {
+            "Mitsubishi": [
+                { code: "E.OC1", desc: "Ngắt quá dòng khi tăng tốc", cause: "- Thời gian tăng tốc (Pr.7) quá ngắn.\n- Tải quá nặng hoặc bị kẹt cơ khí.\n- Bù moment (Pr.0) quá cao.\n- Lỗi phần cứng (IGBT).", solution: "- Tăng thời gian tăng tốc (Pr.7).\n- Kiểm tra tải và cơ khí.\n- Điều chỉnh bù moment.\n- Kiểm tra phần cứng nếu lỗi vẫn còn khi không tải." },
+                { code: "E.OC2", desc: "Ngắt quá dòng khi tốc độ không đổi", cause: "- Tải thay đổi đột ngột.\n- Ngắn mạch ở đầu ra.", solution: "- Kiểm tra sự ổn định của tải.\n- Kiểm tra cáp và cuộn dây động cơ." },
+                { code: "E.OC3", desc: "Ngắt quá dòng khi giảm tốc", cause: "- Thời gian giảm tốc (Pr.8) quá ngắn.\n- Lỗi phần cứng (IGBT).", solution: "- Tăng thời gian giảm tốc (Pr.8).\n- Kiểm tra phần cứng." },
+                { code: "E.OV3", desc: "Ngắt quá áp khi giảm tốc", cause: "- Thời gian giảm tốc (Pr.8) quá ngắn (tải quán tính lớn).\n- Điện áp nguồn quá cao.", solution: "- Tăng thời gian giảm tốc (Pr.8).\n- Lắp thêm điện trở xả.\n- Kiểm tra điện áp nguồn." },
+                { code: "E.THT", desc: "Lỗi quá tải biến tần", cause: "- Tải nặng trong thời gian dài.\n- Hệ thống làm mát lỗi.", solution: "- Giảm tải.\n- Kiểm tra quạt, vệ sinh khe tản nhiệt.\n- Cân nhắc biến tần công suất lớn hơn." },
+                { code: "E.THM", desc: "Lỗi quá tải động cơ", cause: "- Động cơ bị quá tải.\n- Cài đặt Pr.9 không đúng.", solution: "- Kiểm tra tải.\n- Cài đặt Pr.9 bằng dòng định mức của động cơ." },
+                { code: "E.FIN", desc: "Lỗi quá nhiệt tản nhiệt", cause: "- Quạt làm mát hỏng/kẹt.\n- Khe tản nhiệt bẩn.\n- Nhiệt độ môi trường cao.", solution: "- Vệ sinh hoặc thay thế quạt.\n- Cải thiện thông gió tủ điện." },
+            ],
+            "ABB": [
+                { code: "F0001", desc: "OVERCURRENT", cause: "- Ngắn mạch ở cáp hoặc động cơ.\n- Thời gian tăng tốc quá ngắn.\n- Tải quá nặng hoặc kẹt.", solution: "- Kiểm tra cách điện của cáp và động cơ.\n- Tăng thời gian tăng tốc.\n- Kiểm tra tải và cơ khí." },
+                { code: "F0002", desc: "DC OVERVOLT", cause: "- Thời gian giảm tốc quá ngắn.\n- Điện áp nguồn quá cao.\n- Điện trở xả lỗi hoặc không có.", solution: "- Tăng thời gian giảm tốc.\n- Kiểm tra điện áp nguồn.\n- Kiểm tra/lắp đặt điện trở xả." },
+                { code: "F0003", desc: "DEV OVERTEMP", cause: "- Quạt làm mát lỗi hoặc tản nhiệt bẩn.\n- Nhiệt độ môi trường quá cao.", solution: "- Kiểm tra và vệ sinh quạt, tản nhiệt.\n- Đảm bảo thông gió tốt." },
+                { code: "F0022", desc: "INPUT PHASE LOSS", cause: "- Mất một hoặc nhiều pha nguồn.\n- Cầu chì đứt hoặc contactor lỗi.", solution: "- Kiểm tra điện áp trên cả 3 pha đầu vào.\n- Kiểm tra cầu chì, CB, contactor." },
+            ],
+            "Fuji": [
+                { code: "OC1, OC2, OC3", desc: "Quá dòng (tăng/giảm tốc, ổn định)", cause: "- Thời gian tăng/giảm tốc quá ngắn.\n- Tải quá nặng/thay đổi đột ngột.\n- Ngắn mạch đầu ra.", solution: "- Cài đặt lại thời gian tăng/giảm tốc.\n- Kiểm tra tải, cáp và động cơ." },
+                { code: "OV1, OV2, OV3", desc: "Quá áp (tăng/giảm tốc, ổn định)", cause: "- Thời gian giảm tốc quá ngắn.\n- Tải có quán tính lớn.\n- Điện áp nguồn vào cao.", solution: "- Tăng thời gian giảm tốc.\n- Lắp điện trở xả.\n- Kiểm tra lại điện áp nguồn." },
+                { code: "LV", desc: "Thấp áp", cause: "- Điện áp nguồn vào quá thấp hoặc sụt áp.\n- Contactor, CB cấp nguồn lỗi.", solution: "- Kiểm tra lại nguồn cấp và các thiết bị đóng cắt." },
+                { code: "OH1", desc: "Quá nhiệt tản nhiệt", cause: "- Quạt làm mát hỏng.\n- Khe tản nhiệt bẩn.\n- Nhiệt độ môi trường cao.", solution: "- Kiểm tra và vệ sinh quạt, khe tản nhiệt.\n- Cải thiện thông gió." },
+                { code: "Lin", desc: "Mất pha đầu vào", cause: "- Mất một hoặc nhiều pha nguồn.", solution: "- Kiểm tra lại nguồn 3 pha đầu vào." },
+                { code: "OPL", desc: "Mất pha đầu ra", cause: "- Đứt dây kết nối đến động cơ.\n- Hỏng cuộn dây động cơ.", solution: "- Kiểm tra lại dây nối từ biến tần đến động cơ." },
+            ],
+             "Yaskawa": [
+                { code: "oC", desc: "Quá dòng", cause: "- Tải quá nặng hoặc kẹt.\n- Thời gian tăng/giảm tốc ngắn.\n- Ngắn mạch/chạm đất ngõ ra.", solution: "- Kiểm tra tải và cơ khí.\n- Tăng thời gian tăng/giảm tốc.\n- Kiểm tra cách điện cáp và động cơ." },
+                { code: "ov", desc: "Quá áp DC bus", cause: "- Thời gian giảm tốc ngắn.\n- Điện áp nguồn cao.", solution: "- Tăng thời gian giảm tốc.\n- Lắp thêm điện trở xả.\n- Kiểm tra điện áp nguồn." },
+                { code: "Uv1", desc: "Thấp áp DC bus", cause: "- Mất pha nguồn hoặc sụt áp.\n- Tụ điện DC bus lão hóa.", solution: "- Kiểm tra điện áp và kết nối nguồn.\n- Kiểm tra/thay thế tụ điện." },
+                { code: "oH", desc: "Quá nhiệt tản nhiệt", cause: "- Quạt hỏng/kẹt.\n- Tản nhiệt bẩn.\n- Môi trường nóng, tải nặng.", solution: "- Vệ sinh/thay thế quạt.\n- Cải thiện thông gió.\n- Giảm tải." },
+                { code: "GF", desc: "Lỗi chạm đất", cause: "- Cách điện của động cơ/cáp bị hỏng.", solution: "- Kiểm tra điện trở cách điện của động cơ và cáp." },
+                { code: "LF", desc: "Mất pha đầu ra", cause: "- Đứt cáp hoặc lỏng kết nối.\n- Hỏng cuộn dây động cơ.", solution: "- Kiểm tra cáp và siết lại kết nối.\n- Đo điện trở cuộn dây động cơ." },
+            ],
+            "Inovance": [
+                { code: "Err 02, 03, 04", desc: "Quá dòng", cause: "- Thời gian tăng/giảm tốc ngắn.\n- Ngắn mạch/chạm đất ngõ ra.\n- Tải nặng/thay đổi đột ngột.", solution: "- Tăng thời gian tăng/giảm tốc.\n- Kiểm tra cách điện cáp/động cơ.\n- Kiểm tra tải." },
+                { code: "Err 05, 06, 07", desc: "Quá áp", cause: "- Thời gian giảm tốc ngắn.\n- Điện áp nguồn cao.\n- Tải quán tính lớn.", solution: "- Tăng thời gian giảm tốc.\n- Lắp điện trở xả.\n- Kiểm tra điện áp nguồn." },
+                { code: "Err 09", desc: "Điện áp thấp", cause: "- Mất điện tức thời.\n- Điện áp nguồn không ổn định.", solution: "- Kiểm tra lại hệ thống cấp nguồn.\n- Reset lỗi sau khi nguồn ổn định." },
+                { code: "Err 10", desc: "Quá tải Drive", cause: "- Tải quá nặng/kẹt.\n- Công suất biến tần không đủ.", solution: "- Giảm tải, kiểm tra cơ khí.\n- Chọn biến tần công suất lớn hơn." },
+                { code: "Err 14", desc: "Quá nhiệt IGBT", cause: "- Quạt hỏng/kẹt.\n- Tản nhiệt bẩn.\n- Môi trường nóng.", solution: "- Vệ sinh/thay thế quạt.\n- Cải thiện thông gió." },
+            ],
+            "Delta": [
+                { code: "OCA", desc: "Quá dòng khi tăng tốc", cause: "- Thời gian tăng tốc quá ngắn.\n- Công suất không đủ.\n- Ngắn mạch/chạm đất.", solution: "- Tăng thời gian tăng tốc.\n- Kiểm tra cách điện.\n- Chọn biến tần công suất lớn hơn." },
+                { code: "OV", desc: "Quá áp trên DC bus", cause: "- Điện áp ngõ vào quá cao.\n- Thời gian giảm tốc ngắn.", solution: "- Kiểm tra điện áp ngõ vào.\n- Tăng thời gian giảm tốc.\n- Lắp điện trở xả." },
+                { code: "LV", desc: "Thấp áp", cause: "- Điện áp ngõ vào quá thấp.\n- Tụ điện DC bus lão hóa.", solution: "- Kiểm tra điện áp ngõ vào.\n- Nếu lỗi thường xuyên, kiểm tra tụ." },
+                { code: "OH", desc: "Quá nhiệt", cause: "- Quạt hỏng hoặc tản nhiệt bẩn.", solution: "- Kiểm tra và vệ sinh quạt, tản nhiệt." },
+                { code: "GF", desc: "Lỗi chạm đất", cause: "- Dây nối hoặc động cơ bị chạm đất.", solution: "- Kiểm tra cách điện của dây dẫn và động cơ." },
+            ],
+            "Hitachi": [
+                { code: "E01,02,03,04", desc: "Quá dòng", cause: "- Tải quá nặng.\n- Thời gian tăng/giảm tốc ngắn.\n- Ngắn mạch/chạm đất.", solution: "- Kiểm tra tải.\n- Tăng thời gian tăng/giảm tốc.\n- Kiểm tra cách điện." },
+                { code: "E07", desc: "Lỗi quá áp / EEPROM", cause: "- Điện áp vào cao.\n- Thời gian giảm tốc ngắn.", solution: "- Kiểm tra điện áp.\n- Tăng thời gian giảm tốc.\n- Reset nếu lỗi EEPROM." },
+                { code: "E14", desc: "Báo lỗi chạm đất", cause: "- Dây nối hoặc động cơ bị chạm đất.", solution: "- Kiểm tra cách điện dây và động cơ." },
+                { code: "E21, E20", desc: "Báo lỗi quá nhiệt", cause: "- Quạt lỗi hoặc tản nhiệt bẩn.", solution: "- Kiểm tra, vệ sinh hoặc thay thế quạt." },
+            ],
+            "Siemens": [
+                 { code: "F0001", desc: "Quá dòng (Overcurrent)", cause: "- Công suất không phù hợp.\n- Cáp quá dài, ngắn mạch/chạm đất.\n- Cài đặt sai.\n- Tải kẹt.", solution: "- Kiểm tra tương thích công suất.\n- Kiểm tra cáp, cách điện.\n- Cài đặt lại thông số.\n- Kiểm tra cơ khí." },
+                 { code: "F0002", desc: "Quá áp (Overvoltage)", cause: "- Nguồn quá cao.\n- Thời gian giảm tốc ngắn.", solution: "- Kiểm tra nguồn.\n- Tăng thời gian giảm tốc." },
+                 { code: "F0003", desc: "Thấp áp (Undervoltage)", cause: "- Nguồn cấp lỗi hoặc sụt áp.", solution: "- Đảm bảo nguồn cấp ổn định." },
+                 { code: "F0004", desc: "Quá nhiệt biến tần", cause: "- Quạt không hoạt động.\n- Môi trường quá nóng.", solution: "- Kiểm tra quạt.\n- Cải thiện thông gió." },
+            ],
+            "Schneider": [
+                { code: "OCF", desc: "Quá dòng", cause: "Tương tự các hãng khác: tải, thông số, ngắn mạch.", solution: "Kiểm tra tải, tăng thời gian tăng/giảm tốc, kiểm tra cách điện." },
+                { code: "USF", desc: "Thấp áp", cause: "Nguồn cấp không ổn định, quá thấp.", solution: "Kiểm tra và ổn định nguồn cấp." },
+                { code: "OHF", desc: "Quá nhiệt IGBT", cause: "Hệ thống làm mát kém, tải nặng.", solution: "Kiểm tra quạt, vệ sinh tản nhiệt, giảm tải." },
+            ],
+            "LS": [
+                 { code: "OCT", desc: "Quá dòng", cause: "Tương tự các hãng khác.", solution: "Kiểm tra tải, thông số, cách điện." },
+                 { code: "GFT", desc: "Chạm đất", cause: "Cách điện động cơ/cáp lỗi.", solution: "Kiểm tra cách điện." },
+                 { code: "POT", desc: "Mất pha đầu ra", cause: "Lỏng kết nối, đứt dây, động cơ hỏng.", solution: "Kiểm tra kết nối từ biến tần đến động cơ." },
+            ]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('rootCauseChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Lỗi Lắp đặt & Đấu nối', 
+                        'Yếu tố Môi trường', 
+                        'Lỗi Cài đặt Thông số', 
+                        'Chất lượng Nguồn điện', 
+                        'Phần cứng & Hao mòn'
+                    ],
+                    datasets: [{
+                        label: 'Tỷ lệ Nguyên nhân Sự cố',
+                        data: [30, 25, 20, 15, 10],
+                        backgroundColor: [
+                            '#3b82f6', // blue-500
+                            '#60a5fa', // blue-400
+                            '#93c5fd', // blue-300
+                            '#bfdbfe', // blue-200
+                            '#dbeafe'  // blue-100
+                        ],
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const diagnosticCards = document.querySelectorAll('.diagnostic-card');
+            diagnosticCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const details = card.querySelector('.diagnostic-details');
+                    details.classList.toggle('hidden');
+                });
+            });
+
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = header.querySelector('span:last-child');
+                header.addEventListener('click', () => {
+                    const isVisible = !content.classList.contains('hidden');
+                    content.classList.toggle('hidden');
+                    icon.textContent = isVisible ? '+' : '-';
+                });
+            });
+
+            const brandFiltersContainer = document.getElementById('brand-filters');
+            const tableBody = document.getElementById('error-table-body');
+            const searchInput = document.getElementById('searchInput');
+            const searchForm = document.getElementById('searchForm');
+            const noResults = document.getElementById('no-results');
+
+            let activeBrand = Object.keys(errorData)[0];
+
+            function renderBrandButtons() {
+                brandFiltersContainer.innerHTML = '';
+                Object.keys(errorData).forEach(brand => {
+                    const button = document.createElement('button');
+                    button.textContent = brand;
+                    button.className = 'brand-button px-4 py-2 border border-slate-300 rounded-full text-sm font-medium hover:bg-blue-500 hover:text-white';
+                    if (brand === activeBrand) {
+                        button.classList.add('active-brand');
+                    }
+                    button.addEventListener('click', () => {
+                        activeBrand = brand;
+                        renderBrandButtons();
+                        renderTable(searchInput.value.toLowerCase());
+                    });
+                    brandFiltersContainer.appendChild(button);
+                });
+                 const allButton = document.createElement('button');
+                allButton.textContent = "Tất cả";
+                allButton.className = 'brand-button px-4 py-2 border border-slate-300 rounded-full text-sm font-medium hover:bg-blue-500 hover:text-white';
+                if (activeBrand === 'All') {
+                    allButton.classList.add('active-brand');
+                }
+                allButton.addEventListener('click', () => {
+                    activeBrand = 'All';
+                    renderBrandButtons();
+                    renderTable(searchInput.value.toLowerCase());
+                });
+                brandFiltersContainer.appendChild(allButton);
+            }
+
+            function renderTable(filter = '') {
+                tableBody.innerHTML = '';
+                let resultsFound = false;
+
+                const brandsToRender = activeBrand === 'All' ? Object.keys(errorData) : [activeBrand];
+
+                brandsToRender.forEach(brand => {
+                    const brandData = errorData[brand];
+                    const filteredData = brandData.filter(row =>
+                        row.code.toLowerCase().includes(filter) ||
+                        row.desc.toLowerCase().includes(filter) ||
+                        row.cause.toLowerCase().includes(filter) ||
+                        row.solution.toLowerCase().includes(filter)
+                    );
+
+                    if (filteredData.length > 0) {
+                        resultsFound = true;
+                        if(activeBrand === 'All'){
+                             const brandRow = document.createElement('tr');
+                             brandRow.innerHTML = `<td colspan="4" class="p-4 bg-slate-200 font-bold text-lg">${brand}</td>`;
+                             tableBody.appendChild(brandRow);
+                        }
+
+                        filteredData.forEach(row => {
+                            const tr = document.createElement('tr');
+                            tr.className = "border-b border-slate-200 hover:bg-slate-50";
+                            tr.innerHTML = `
+                                <td class="p-4 font-mono font-semibold text-blue-600">${row.code}</td>
+                                <td class="p-4">${row.desc}</td>
+                                <td class="p-4 whitespace-pre-line">${row.cause}</td>
+                                <td class="p-4 whitespace-pre-line">${row.solution}</td>
+                            `;
+                            tableBody.appendChild(tr);
+                        });
+                    }
+                });
+                
+                noResults.classList.toggle('hidden', resultsFound);
+
+            }
+            
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                renderTable(searchInput.value.toLowerCase());
+            });
+
+            searchInput.addEventListener('input', (e) => {
+                renderTable(e.target.value.toLowerCase());
+            });
+
+            activeBrand = 'Mitsubishi';
+            renderBrandButtons();
+            renderTable();
+        });
+    </script>
+
+</body>
+</html>
